@@ -215,28 +215,22 @@ const handleExport = useCallback(async () => {
   const element = previewRef.current;
 
   try {
-    element.classList.add("export-mode");
+    const domToImage = (await import("https://cdn.jsdelivr.net/npm/dom-to-image@latest/+esm")).default;
 
-    const html2canvas = (await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm")).default;
-
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      backgroundColor: null,
-      useCORS: true,
-      height: element.scrollHeight,
-      windowHeight: element.scrollHeight,
+    const dataUrl = await domToImage.toPng(element, {
+      cacheBust: true,
+      pixelRatio: 2,
     });
 
     const link = document.createElement("a");
     link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-list.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.href = dataUrl;
     link.click();
 
   } catch (e) {
     alert("Export failed: " + e.message);
   }
 
-  element.classList.remove("export-mode");
   setIsExporting(false);
 
 }, [title]);
@@ -258,14 +252,6 @@ const handleExport = useCallback(async () => {
       <link href={font.import} rel="stylesheet" />
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        .export-mode * {
-  animation: none !important;
-  transition: none !important;
-}
-
-.export-mode .blur-badge {
-  background-position: 100% 0 !important;
-}
         body { overflow: hidden; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
