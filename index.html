@@ -207,23 +207,41 @@ function ListBlurer() {
   const blurCount = blurred.size;
   const visibleCount = items.length - blurCount;
 
-  const handleExport = useCallback(async () => {
-    if (!previewRef.current) return;
-    setIsExporting(true);
-    try {
-      const html2canvas = (await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm")).default;
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2, backgroundColor: null, useCORS: true, logging: false,
-      });
-      const link = document.createElement("a");
-      link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-list.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    } catch (e) {
-      alert("Export failed: " + e.message);
-    }
-    setIsExporting(false);
-  }, [title]);
+const handleExport = useCallback(async () => {
+  if (!previewRef.current) return;
+
+  setIsExporting(true);
+
+  const element = previewRef.current;
+
+  try {
+    element.classList.add("export-mode");
+
+    const html2canvas = (await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm")).default;
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      backgroundColor: null,
+      useCORS: true,
+      height: element.scrollHeight,
+      windowHeight: element.scrollHeight,
+    });
+
+    const link = document.createElement("a");
+    link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-list.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+  } catch (e) {
+    alert("Export failed: " + e.message);
+  }
+
+  element.classList.remove("export-mode");
+  setIsExporting(false);
+
+}, [title]);
+
+
 
   const SmallBtn = ({ children, onClick, style, title: t }) => (
     <button onClick={onClick} title={t} style={{
@@ -240,6 +258,14 @@ function ListBlurer() {
       <link href={font.import} rel="stylesheet" />
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        .export-mode * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.export-mode .blur-badge {
+  background-position: 100% 0 !important;
+}
         body { overflow: hidden; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -556,7 +582,7 @@ function ListBlurer() {
             style={{
               width: 580, minHeight: 400, background: theme.bg,
               borderRadius: 20, padding: "32px 30px 24px",
-              position: "relative", overflow: "hidden",
+              position: "relative",
               border: `1px solid ${theme.cardBorder}`,
             }}
           >
